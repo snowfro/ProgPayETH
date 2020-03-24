@@ -1,10 +1,8 @@
 pragma solidity ^0.6.1;
 
 // Add events!!!
-// check if != address(0) works to see if address is null
 // modify for DAI, USTC, USDT, etc
-//check require added on "request payment" preventing requesting same payment twice
-//remove selfDestruct so contract keeps info live/active
+// check forceDissolve() reentrancy vulnerability
 
 
 contract ProgPayETH {
@@ -28,8 +26,10 @@ contract ProgPayETH {
 
     //second option to dissolve by providing a mediator who will mediate fund distribution outside of contract. parties signal
     //their choice using setMediatorAddress() and they must match in order to enable dissolution
-    address payable public payerMediatorAddress=0x0000000000000000000000000000000000000000;
-    address payable public payeeMediatorAddress=0x0000000000000000000000000000000000000001;
+    //address payable public payerMediatorAddress=0x0000000000000000000000000000000000000000;
+    //address payable public payeeMediatorAddress=0x0000000000000000000000000000000000000001;
+    address payable public payerMediatorAddress;
+    address payable public payeeMediatorAddress;
 
     //has a payment number been requested?
     mapping(uint256 => bool) public paymentNumberToRequested;
@@ -41,6 +41,7 @@ contract ProgPayETH {
     mapping(uint256 => uint256) public paymentNumberToValue;
 
     bool public contractFunded;
+    bool public contractTerminated;
     uint256 public nextPayment;
 
     uint quotient;
@@ -78,12 +79,14 @@ contract ProgPayETH {
         require(msg.sender==payer);
         require(msg.value==contractValueInWei);
         require(contractFunded==false);
+        require(contractTerminated==false);
         contractFunded = true;
         return true;
     }
 
     //payee can request a payment only after contract is funded and not after all payments have been completed.
     function requestPayment() public returns(bool){
+        require(contractTerminated==false);
         require(contractFunded==true);
         require(msg.sender==payee);
         require(paymentNumberToRequested[nextPayment]==false);
@@ -96,6 +99,7 @@ contract ProgPayETH {
     //payee received funds upon aproval
     function approvePayment() public returns(bool){
         uint256 amountToSend = paymentNumberToValue[nextPayment];
+        require(contractTerminated==false);
         require(contractFunded==true);
         require(msg.sender==payer);
         require(nextPayment != 0);
@@ -105,30 +109,23 @@ contract ProgPayETH {
         if(nextPayment<numberOfPayments){
             nextPayment++;
         } else {
+            contractFunded=false;
+            contractTerminated=true;
             nextPayment=0;
         }
         payee.transfer(amountToSend);
         return true;
     }
 
-    //allows each party to signal their interest to dissolve contract. contract must be funded
-     function toggleAgreeToDissolve() public returns(bool){
-        require(msg.sender==payer || msg.sender==payee);
-        require(contractFunded==true);
-        require(nextPayment != 0);
-        if (msg.sender==payer){
-            payerWantsOut = !payerWantsOut;
-        } else {
-            payeeWantsOut = !payeeWantsOut;
-        }
-        return true;
-    }
+   
 
     //if both payer and payee are in agreement to dissolve return balance of contract to payer
     function dissolve() public payable returns(bool){
+        require(contractTerminated==false);
         require(payeeWantsOut && payerWantsOut);
         contractFunded=false;
-        selfdestruct(payer);
+        contractTerminated=true;
+        payer.transfer(address(this).balance);
         return true;
     }
 
@@ -137,23 +134,43 @@ contract ProgPayETH {
     //can signal for an agreed upon mediator to receive the funds who would then distribute them per a mediation agreement
     //outside of this contract.
     function forceDissolve() public payable returns(bool){
+        require(contractTerminated==false);
         require(payeeWantsOut || payerWantsOut);
-
-        if (payerMediatorAddress == payeeMediatorAddress){
-            selfdestruct(payerMediatorAddress);
+        if (payerMediatorAddress != address(0) && payeeMediatorAddress != address(0) && payerMediatorAddress == payeeMediatorAddress){
+            contractFunded=false;
+            contractTerminated=true;
+            payerMediatorAddress.transfer(address(this).balance);
         } else {
             if (forceDissolveStartTime == 0){
               forceDissolveStartTime = now;
             } else if (now > forceDissolveStartTime + forceDissolveDelay){
-                uint256 splitPayment = paymentNumberToValue[nextPayment]/2;
+                uint256 contractBalanceRemaining = address(this).balance;
+                uint256 splitLastPayment = paymentNumberToValue[nextPayment]/2;
+                uint256 balanceReturnToPayer = contractBalanceRemaining-splitLastPayment;
                 paymentNumberToValue[nextPayment]=0;
-                payee.transfer(splitPayment);
-                selfdestruct(payer);
+                contractFunded=false;
+                contractTerminated=true;
+                payee.transfer(splitLastPayment);
+                payer.transfer(balanceReturnToPayer);
             } else {
             return false;
             }
         }
 
+        return true;
+    }
+    
+     //allows each party to signal their interest to dissolve contract. contract must be funded
+     function toggleAgreeToDissolve() public returns(bool){
+         require(contractTerminated==false);
+        require(msg.sender==payer || msg.sender==payee);
+        require(contractFunded==true);
+        require(nextPayment != 0);
+        if (msg.sender==payer){
+            payerWantsOut = !payerWantsOut;
+        } else {
+            payeeWantsOut = !payeeWantsOut;
+        }
         return true;
     }
 
@@ -167,6 +184,7 @@ contract ProgPayETH {
 
     //payer and payee can confirm agreement to mediation by providing the same mediator address
     function setMediatorAddress(address payable _mediatorAddress) public returns(bool){
+        require(contractTerminated==false);
         require(msg.sender==payer || msg.sender==payee);
         if (msg.sender==payer){
             payerMediatorAddress = _mediatorAddress;
@@ -196,4 +214,4 @@ contract ProgPayETH {
 }
 
 
-//    "0xCA35b7d915458EF540aDe6068dFe2F44E8fa733c","0x14723A09ACff6D2A60DcdF7aA4AFf308FDDC160C","1000000000000000000","9","180"
+//    "0xa0759e5069bd17919ed7426bc3D246b610D7362e","0xc28DAFE415B15465BFbEEaE8D203843Bf5D61DF5","12500000000000000000","6","300"

@@ -50,9 +50,14 @@ render() {
     return (
       <div>
       <p>This Contract's Payer is {payer && payer.value} and the Payee is {payee && payee.value}.</p>
-      <p>This contract is {contractFunded && (contractFunded.value===true?"":"NOT YET")} funded.</p>
+      <p>This contract is {contractFunded && (contractFunded.value===true?"":"NOT YET")} funded. </p>
+      {contractFunded && contractFunded.value===true &&
+        <div>
+        <p>Remaining balance to be paid on this contract: {remainingBalance && (web3.utils.fromWei((remainingBalance.value).toString(), 'ether'))}Ξ.</p>
+        </div>
+      }
       <p>The total value of this contract is {contractValue && (web3.utils.fromWei((contractValue.value).toString(), 'ether'))}Ξ to be paid over {numberOfPayments && numberOfPayments.value} payments.</p>
-      <p>Remaining balance to be paid on this contract: {remainingBalance && (web3.utils.fromWei((remainingBalance.value).toString(), 'ether'))}Ξ.</p>
+
       <p>Next payment is number {nextPayment && nextPayment.value}.</p>
       {numberOfPayments &&
       <ShowPaymentTable
