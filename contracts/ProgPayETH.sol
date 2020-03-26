@@ -1,4 +1,4 @@
-pragma solidity ^0.6.1;
+pragma solidity ^0.5.9;
 
 // Add events!!!
 // modify for DAI, USTC, USDT, etc
