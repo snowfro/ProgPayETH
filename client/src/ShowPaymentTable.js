@@ -97,14 +97,14 @@ render() {
   const payer = ProgPayETH.payer[this.props.indexes.payerIndex];
   const nextPayment = ProgPayETH.nextPayment['0x0'];
 
-  console.log(nextPayment && "NPI "+nextPayment.value);
-  console.log('2 '+payee.value);
-  console.log('2r '+payer.value);
+  //console.log(nextPayment && "NPI "+nextPayment.value);
+  //console.log('2 '+payee.value);
+  //console.log('2r '+payer.value);
 
-  if (payer){
+  if (payer || payee){
     isPayer = this.props.drizzleState.accounts[0]===payer.value;
     isPayee = this.props.drizzleState.accounts[0]===payee.value;
-    console.log(isPayer?"Payer":isPayee?"Payee":"Neither Payer or Payee");
+    //console.log(isPayer?"Payer":isPayee?"Payee":"Neither Payer or Payee");
   }
 
 
@@ -120,7 +120,7 @@ paymentDetails = this.state.paymentIndexes.map(x=>{
 });
 
 let statusReq = this.getStatusReq();
-console.log("SRQ "+statusReq);
+//console.log("SRQ "+statusReq);
 let statusApp = this.getStatusApp();
 
 console.log(paymentDetails);

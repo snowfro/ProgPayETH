@@ -123,8 +123,10 @@ contract ProgPayETH {
     function dissolve() public payable returns(bool){
         require(contractTerminated==false);
         require(payeeWantsOut && payerWantsOut);
+        require(msg.sender==payer || msg.sender==payee);
         contractFunded=false;
         contractTerminated=true;
+        nextPayment=0;
         payer.transfer(address(this).balance);
         return true;
     }
@@ -136,9 +138,11 @@ contract ProgPayETH {
     function forceDissolve() public payable returns(bool){
         require(contractTerminated==false);
         require(payeeWantsOut || payerWantsOut);
+        require(msg.sender==payer || msg.sender==payee);
         if (payerMediatorAddress != address(0) && payeeMediatorAddress != address(0) && payerMediatorAddress == payeeMediatorAddress){
             contractFunded=false;
             contractTerminated=true;
+            nextPayment=0;
             payerMediatorAddress.transfer(address(this).balance);
         } else {
             if (forceDissolveStartTime == 0){
@@ -148,6 +152,7 @@ contract ProgPayETH {
                 uint256 splitLastPayment = paymentNumberToValue[nextPayment]/2;
                 uint256 balanceReturnToPayer = contractBalanceRemaining-splitLastPayment;
                 paymentNumberToValue[nextPayment]=0;
+                nextPayment=0;
                 contractFunded=false;
                 contractTerminated=true;
                 payee.transfer(splitLastPayment);
@@ -178,6 +183,7 @@ contract ProgPayETH {
     //and keep going with initial agreement
     function resetForceDissolve() public returns(bool){
         require(!payeeWantsOut && !payerWantsOut);
+        require(msg.sender==payer || msg.sender==payee);
         forceDissolveStartTime = 0;
         return true;
     }
