@@ -1,8 +1,10 @@
-pragma solidity ^0.5.9;
+pragma solidity ^0.5.1;
 
 // Add events!!!
 // modify for DAI, USTC, USDT, etc
 // check forceDissolve() reentrancy vulnerability
+// consider adding "approve+dissolve" function for payer wanting to allow one last payment
+// and immediately dissolve after
 
 
 contract ProgPayETH {
@@ -44,6 +46,8 @@ contract ProgPayETH {
     bool public contractTerminated;
     uint256 public nextPayment;
 
+    string public contractName = "Progress Payments ETH";
+
     uint quotient;
 
 
@@ -78,16 +82,17 @@ contract ProgPayETH {
     function initialDeposit() public payable returns(bool) {
         require(msg.sender==payer);
         require(msg.value==contractValueInWei);
-        require(contractFunded==false);
-        require(contractTerminated==false);
+        require(!contractFunded);
+        require(!contractTerminated);
         contractFunded = true;
         return true;
     }
 
     //payee can request a payment only after contract is funded and not after all payments have been completed.
     function requestPayment() public returns(bool){
-        require(contractTerminated==false);
-        require(contractFunded==true);
+        require(!payeeWantsOut);
+        require(!contractTerminated);
+        require(contractFunded);
         require(msg.sender==payee);
         require(paymentNumberToRequested[nextPayment]==false);
         require(nextPayment != 0);
@@ -99,11 +104,11 @@ contract ProgPayETH {
     //payee received funds upon aproval
     function approvePayment() public returns(bool){
         uint256 amountToSend = paymentNumberToValue[nextPayment];
-        require(contractTerminated==false);
-        require(contractFunded==true);
+        require(!contractTerminated);
+        require(contractFunded);
         require(msg.sender==payer);
         require(nextPayment != 0);
-        require(paymentNumberToRequested[nextPayment]==true);
+        require(paymentNumberToRequested[nextPayment]);
         paymentNumberToApproved[nextPayment]=true;
         paymentNumberToValue[nextPayment]=0;
         if(nextPayment<numberOfPayments){
@@ -117,17 +122,31 @@ contract ProgPayETH {
         return true;
     }
 
-   
 
-    //if both payer and payee are in agreement to dissolve return balance of contract to payer
+    //if both payer and payee are in agreement to dissolve return balance of contract to payer when no payment is requested, send last payment to payee and remainder
+    //payer if nextPayment is requested but not approve.
     function dissolve() public payable returns(bool){
-        require(contractTerminated==false);
+        require(!contractTerminated);
         require(payeeWantsOut && payerWantsOut);
         require(msg.sender==payer || msg.sender==payee);
-        contractFunded=false;
-        contractTerminated=true;
-        nextPayment=0;
-        payer.transfer(address(this).balance);
+        require(forceDissolveStartTime==0);
+        if (paymentNumberToRequested[nextPayment]){
+            uint256 contractBalanceRemaining = address(this).balance;
+            uint256 finalPayment = paymentNumberToValue[nextPayment];
+            uint256 balanceReturnToPayer = contractBalanceRemaining - finalPayment;
+            contractFunded=false;
+            contractTerminated=true;
+            nextPayment=0;
+            paymentNumberToValue[nextPayment]=0;
+            payee.transfer(finalPayment);
+            payer.transfer(balanceReturnToPayer);
+        } else {
+            contractFunded=false;
+            contractTerminated=true;
+            nextPayment=0;
+            payer.transfer(address(this).balance);
+        }
+        
         return true;
     }
 
@@ -136,9 +155,13 @@ contract ProgPayETH {
     //can signal for an agreed upon mediator to receive the funds who would then distribute them per a mediation agreement
     //outside of this contract.
     function forceDissolve() public payable returns(bool){
-        require(contractTerminated==false);
-        require(payeeWantsOut || payerWantsOut);
-        require(msg.sender==payer || msg.sender==payee);
+        require(!contractTerminated);
+        //require(payeeWantsOut || payerWantsOut);
+        if(paymentNumberToRequested[nextPayment]){
+            require(msg.sender==payer || (msg.sender==payer && payerMediatorAddress != address(0) && payeeMediatorAddress != address(0) && payerMediatorAddress == payeeMediatorAddress));
+        }else {
+            require(msg.sender==payer || msg.sender==payee);
+        }
         if (payerMediatorAddress != address(0) && payeeMediatorAddress != address(0) && payerMediatorAddress == payeeMediatorAddress){
             contractFunded=false;
             contractTerminated=true;
@@ -164,17 +187,25 @@ contract ProgPayETH {
 
         return true;
     }
-    
-     //allows each party to signal their interest to dissolve contract. contract must be funded
+
+     //allows each party to signal their interest to dissolve contract. contract must be funded. payee can not signal to dissolve if nextPayment is requested
      function toggleAgreeToDissolve() public returns(bool){
-         require(contractTerminated==false);
+        require(!contractTerminated);
         require(msg.sender==payer || msg.sender==payee);
-        require(contractFunded==true);
+        require(contractFunded);
         require(nextPayment != 0);
         if (msg.sender==payer){
             payerWantsOut = !payerWantsOut;
         } else {
-            payeeWantsOut = !payeeWantsOut;
+            if (paymentNumberToRequested[nextPayment]==true){
+                if(payerWantsOut){
+                    payeeWantsOut = !payeeWantsOut;
+                } else {
+                    return false;
+                }
+            } else {
+                payeeWantsOut = !payeeWantsOut;
+            }
         }
         return true;
     }
@@ -190,7 +221,7 @@ contract ProgPayETH {
 
     //payer and payee can confirm agreement to mediation by providing the same mediator address
     function setMediatorAddress(address payable _mediatorAddress) public returns(bool){
-        require(contractTerminated==false);
+        require(!contractTerminated);
         require(msg.sender==payer || msg.sender==payee);
         if (msg.sender==payer){
             payerMediatorAddress = _mediatorAddress;

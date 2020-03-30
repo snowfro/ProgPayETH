@@ -1,5 +1,5 @@
 const ProgPayETH = artifacts.require("ProgPayETH");
 
 module.exports = function(deployer) {
-  deployer.deploy(ProgPayETH, "0xa0759e5069bd17919ed7426bc3D246b610D7362e","0xc28DAFE415B15465BFbEEaE8D203843Bf5D61DF5","12100000000000000000","3","300");
+  deployer.deploy(ProgPayETH, "0xf3860788D1597cecF938424bAABe976FaC87dC26","0x5462deE16b3f4D240EBBE52C9C4214c912ccDda4","100000000000000000","3","300");
 };

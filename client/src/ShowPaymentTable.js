@@ -30,7 +30,7 @@ constructor(props){
  componentDidMount() {
 
     const { drizzle } = this.props;
-    const contract = drizzle.contracts.ProgPayETH;
+    const contract = drizzle.contracts.DynamicProgPayETH;
     let paymentIndexes = [];
 
     for (let i=0; i<this.props.numberOfPayments; i++){
@@ -45,14 +45,14 @@ constructor(props){
 
  handleRequestPayment(){
    const {drizzle, drizzleState} = this.props;
-   const contract = drizzle.contracts.ProgPayETH;
+   const contract = drizzle.contracts.DynamicProgPayETH;
    const stackIdReq = contract.methods['requestPayment'].cacheSend({from: drizzleState.accounts[0], value:0});
    this.setState({ stackIdReq });
  }
 
  handleApprovePayment(){
    const {drizzle, drizzleState} = this.props;
-   const contract = drizzle.contracts.ProgPayETH;
+   const contract = drizzle.contracts.DynamicProgPayETH;
    const stackIdApp = contract.methods['approvePayment'].cacheSend({from: drizzleState.accounts[0], value:0});
    this.setState({ stackIdApp });
  }
@@ -87,15 +87,16 @@ constructor(props){
 
 render() {
 
-  const { drizzle, drizzleState } = this.props;
-  const { ProgPayETH } = this.props.drizzleState.contracts;
-  console.log(drizzleState);
-  console.log(drizzle.contracts.ProgPayETH.address);
+  const { drizzle} = this.props;
+  const { DynamicProgPayETH } = this.props.drizzleState.contracts;
+  //console.log(drizzle);
+  //console.log(drizzleState);
+  console.log(drizzle.contracts.DynamicProgPayETH.address);
   let isPayer;
   let isPayee;
-  const payee = ProgPayETH.payee[this.props.indexes.payeeIndex];
-  const payer = ProgPayETH.payer[this.props.indexes.payerIndex];
-  const nextPayment = ProgPayETH.nextPayment['0x0'];
+  const payee = DynamicProgPayETH.payee[this.props.indexes.payeeIndex];
+  const payer = DynamicProgPayETH.payer[this.props.indexes.payerIndex];
+  const nextPayment = DynamicProgPayETH.nextPayment['0x0'];
 
   //console.log(nextPayment && "NPI "+nextPayment.value);
   //console.log('2 '+payee.value);
@@ -112,11 +113,11 @@ let paymentDetails = {};
 //console.log(this.state.paymentIndexes);
 paymentDetails = this.state.paymentIndexes.map(x=>{
   let rObj = {};
-  rObj['paymentValue'] = ProgPayETH.paymentNumberToValue[x.paymentIndex];
-  rObj['requested'] = ProgPayETH.paymentNumberToRequested[x.requestedIndex];
-  rObj['approved'] = ProgPayETH.paymentNumberToApproved[x.approvedIndex];
+  rObj['paymentValue'] = DynamicProgPayETH.paymentNumberToValue[x.paymentIndex];
+  rObj['requested'] = DynamicProgPayETH.paymentNumberToRequested[x.requestedIndex];
+  rObj['approved'] = DynamicProgPayETH.paymentNumberToApproved[x.approvedIndex];
   return rObj;
-  //return {ProgPayETH.paymentNumberToValue[x.paymentIndex],ProgPayETH.paymentNumberToRequested[x.requestedIndex], ProgPayETH.paymentNumberToApproved[x.approvedIndex]}
+  //return {DynamicProgPayETH.paymentNumberToValue[x.paymentIndex],DynamicProgPayETH.paymentNumberToRequested[x.requestedIndex], DynamicProgPayETH.paymentNumberToApproved[x.approvedIndex]}
 });
 
 let statusReq = this.getStatusReq();

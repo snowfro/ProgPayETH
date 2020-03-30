@@ -19,9 +19,10 @@ constructor(props){
 
  componentDidMount() {
     //access drizzle props within componentDidMount
-    const {drizzle, drizzleState} = this.props;
+    const {drizzle} = this.props;
 
-    const contract = drizzle.contracts.ProgPayETH;
+    const contract = drizzle.contracts.DynamicProgPayETH;
+
 
     var payeeIndex = contract.methods["payee"].cacheCall();
     var payerIndex = contract.methods["payer"].cacheCall();
@@ -42,8 +43,8 @@ handleDissolveFunctionsToggle(){
 
  handleInitialDeposit(){
    const {drizzle, drizzleState} = this.props;
-   const contract = drizzle.contracts.ProgPayETH;
-   const contractValue = drizzleState.contracts.ProgPayETH.contractValueInWei[this.state.contractValueIndex];
+   const contract = drizzle.contracts.DynamicProgPayETH;
+   const contractValue = drizzleState.contracts.DynamicProgPayETH.contractValueInWei[this.state.contractValueIndex];
    const stackIdDep = contract.methods['initialDeposit'].cacheSend({from: drizzleState.accounts[0], value:contractValue.value});
    this.setState({ stackIdDep });
  }
@@ -63,16 +64,18 @@ handleDissolveFunctionsToggle(){
  }
 
 render() {
-  const { drizzle } = this.props;
-  const { ProgPayETH } = this.props.drizzleState.contracts;
+  const { drizzle, drizzleState } = this.props;
+  const { DynamicProgPayETH } = this.props.drizzleState.contracts;
   console.log(drizzle);
-  console.log(drizzle.contracts.ProgPayETH.address);
+  console.log(drizzleState);
+  //console.log(drizzle.contracts.DynamicProgPayETH.address);
   let isPayer;
   let isPayee;
-  console.log("dissolve? "+ this.state.dissolve);
+  //console.log("W3 "+web3.version.api);
+  //console.log("dissolve? "+ this.state.dissolve);
 
 /*
-  let contractTxHash = drizzle.contracts.ProgPayETH.contractArtifact.networks['5777'].transactionHash;
+  let contractTxHash = drizzle.contracts.DynamicProgPayETH.contractArtifact.networks['5777'].transactionHash;
   let dateTimeStamp;
   let timeStampData = web3.eth.getTransaction(contractTxHash, (err, result) =>{
     return result;
@@ -88,21 +91,21 @@ render() {
 
 
 
-
-  const payee = ProgPayETH.payee[this.state.payeeIndex];
-  const payer = ProgPayETH.payer[this.state.payerIndex];
-  const contractValue = ProgPayETH.contractValueInWei[this.state.contractValueIndex];
-  const numberOfPayments = ProgPayETH.numberOfPayments[this.state.numberOfPaymentsIndex];
-  const contractFunded = ProgPayETH.contractFunded[this.state.fundedIndex];
-  const nextPayment = ProgPayETH.nextPayment[this.state.nextPaymentIndex];
-  const remainingBalance = ProgPayETH.remainingBalance[this.state.remainingBalanceIndex];
-  const terminated = ProgPayETH.contractTerminated[this.state.terminatedIndex];
+  //console.log(drizzleState);
+  const payee = DynamicProgPayETH.payee[this.state.payeeIndex];
+  const payer = DynamicProgPayETH.payer[this.state.payerIndex];
+  const contractValue = DynamicProgPayETH.contractValueInWei[this.state.contractValueIndex];
+  const numberOfPayments = DynamicProgPayETH.numberOfPayments[this.state.numberOfPaymentsIndex];
+  const contractFunded = DynamicProgPayETH.contractFunded[this.state.fundedIndex];
+  const nextPayment = DynamicProgPayETH.nextPayment[this.state.nextPaymentIndex];
+  const remainingBalance = DynamicProgPayETH.remainingBalance[this.state.remainingBalanceIndex];
+  const terminated = DynamicProgPayETH.contractTerminated[this.state.terminatedIndex];
 
   if (nextPayment){
     //console.log("NP "+nextPayment.value);
   }
 
-  if (payer){
+  if (payer && payee){
     isPayer = this.props.drizzleState.accounts[0]===payer.value;
     isPayee = this.props.drizzleState.accounts[0]===payee.value;
     //console.log(isPayer?"Payer":isPayee?"Payee":"Neither Payer or Payee");
@@ -114,7 +117,7 @@ render() {
 
     return (
       <div>
-      <h4>Progress Payment Contract Dashboard ({drizzle.contracts.ProgPayETH.address})</h4>
+      <h4>Progress Payment Contract Dashboard ({drizzle.contracts.DynamicProgPayETH.address})</h4>
       {
         payer && isPayer===true &&
         <div>
@@ -168,6 +171,7 @@ render() {
       drizzle={this.props.drizzle}
       drizzleState={this.props.drizzleState}
       indexes={this.state}
+      nextPayment={nextPayment.value}
       />
     }
     <br/>

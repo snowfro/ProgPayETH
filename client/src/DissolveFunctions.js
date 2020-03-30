@@ -1,8 +1,5 @@
 import React from "react";
 
-import Web3 from 'web3';
-const web3 = new Web3(Web3.givenProvider || "http://localhost:8545");
-
 class DissolveFunctions extends React.Component {
 
   constructor(props){
@@ -21,7 +18,7 @@ class DissolveFunctions extends React.Component {
   componentDidMount() {
 
      const { drizzle } = this.props;
-     const contract = drizzle.contracts.ProgPayETH;
+     const contract = drizzle.contracts.DynamicProgPayETH;
 
      const payerDissolveIndex = contract.methods['payerWantsOut'].cacheCall();
      const payeeDissolveIndex = contract.methods['payeeWantsOut'].cacheCall();
@@ -34,15 +31,17 @@ class DissolveFunctions extends React.Component {
      const payerMediatorAddressIndex = contract.methods['payerMediatorAddress'].cacheCall();
      const payeeMediatorAddressIndex = contract.methods['payeeMediatorAddress'].cacheCall();
 
+     const nextPaymentRequestedIndex = contract.methods['paymentNumberToRequested'].cacheCall(this.props.nextPayment);
 
 
-    this.setState({payerDissolveIndex, payeeDissolveIndex, timeRemainingIndex, forceDissolveStartTimeIndex, forceDissolveDelayIndex, payerMediatorAddressIndex, payeeMediatorAddressIndex});
+
+    this.setState({payerDissolveIndex, payeeDissolveIndex, timeRemainingIndex, forceDissolveStartTimeIndex, forceDissolveDelayIndex, payerMediatorAddressIndex, payeeMediatorAddressIndex, nextPaymentRequestedIndex});
   }
 
   handleToggleDissolveStatus(){
     const { drizzleState } = this.props;
-    const { ProgPayETH } = this.props.drizzle.contracts;
-    const stackIdToggleDis = ProgPayETH.methods['toggleAgreeToDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
+    const { DynamicProgPayETH } = this.props.drizzle.contracts;
+    const stackIdToggleDis = DynamicProgPayETH.methods['toggleAgreeToDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
     this.setState({ stackIdToggleDis });
   }
 
@@ -61,8 +60,8 @@ class DissolveFunctions extends React.Component {
 
   handleSetMediatorAddress(){
     const { drizzleState } = this.props;
-    const { ProgPayETH } = this.props.drizzle.contracts;
-    const stackIdSetMediator = ProgPayETH.methods['setMediatorAddress'].cacheSend(this.state.mediatorAddress,{from: drizzleState.accounts[0], value:0});
+    const { DynamicProgPayETH } = this.props.drizzle.contracts;
+    const stackIdSetMediator = DynamicProgPayETH.methods['setMediatorAddress'].cacheSend(this.state.mediatorAddress,{from: drizzleState.accounts[0], value:0});
     this.setState({ stackIdSetMediator });
   }
 
@@ -86,8 +85,8 @@ class DissolveFunctions extends React.Component {
 
   handleDissolveContract(){
     const { drizzleState } = this.props;
-    const { ProgPayETH } = this.props.drizzle.contracts;
-    const stackIdDissolve = ProgPayETH.methods['dissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
+    const { DynamicProgPayETH } = this.props.drizzle.contracts;
+    const stackIdDissolve = DynamicProgPayETH.methods['dissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
     this.setState({ stackIdDissolve });
   }
 
@@ -106,8 +105,8 @@ class DissolveFunctions extends React.Component {
 
   handleForceDissolveContract(){
     const { drizzleState } = this.props;
-    const { ProgPayETH } = this.props.drizzle.contracts;
-    const stackIdForceDissolve = ProgPayETH.methods['forceDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
+    const { DynamicProgPayETH } = this.props.drizzle.contracts;
+    const stackIdForceDissolve = DynamicProgPayETH.methods['forceDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
     this.setState({ stackIdForceDissolve });
   }
 
@@ -128,8 +127,8 @@ class DissolveFunctions extends React.Component {
 
   handleForceDissolveContract2(){
     const { drizzleState } = this.props;
-    const { ProgPayETH } = this.props.drizzle.contracts;
-    const stackIdForceDissolve2 = ProgPayETH.methods['forceDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
+    const { DynamicProgPayETH } = this.props.drizzle.contracts;
+    const stackIdForceDissolve2 = DynamicProgPayETH.methods['forceDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
     this.setState({ stackIdForceDissolve2 });
   }
 
@@ -148,8 +147,8 @@ class DissolveFunctions extends React.Component {
 
   handleResetDissolveContractTimer(){
     const { drizzleState } = this.props;
-    const { ProgPayETH } = this.props.drizzle.contracts;
-    const stackIdresetForceDissolve = ProgPayETH.methods['resetForceDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
+    const { DynamicProgPayETH } = this.props.drizzle.contracts;
+    const stackIdresetForceDissolve = DynamicProgPayETH.methods['resetForceDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
     this.setState({ stackIdresetForceDissolve });
   }
 
@@ -170,20 +169,23 @@ class DissolveFunctions extends React.Component {
 
   render(){
 
-    const { drizzle, drizzleState } = this.props;
-    const { ProgPayETH } = this.props.drizzleState.contracts;
 
-    const payerDissolve = ProgPayETH.payerWantsOut[this.state.payerDissolveIndex];
-    const payeeDissolve = ProgPayETH.payeeWantsOut[this.state.payeeDissolveIndex];
-    const forceDissolveStartTime = ProgPayETH.forceDissolveStartTime[this.state.forceDissolveStartTimeIndex];
-    const forceDissolveDelay = ProgPayETH.forceDissolveDelay[this.state.forceDissolveDelayIndex];
+    const { DynamicProgPayETH } = this.props.drizzleState.contracts;
 
-    const payerMediatorAddress = ProgPayETH.payerMediatorAddress[this.state.payerMediatorAddressIndex];
-    const payeeMediatorAddress = ProgPayETH.payeeMediatorAddress[this.state.payeeMediatorAddressIndex];
+    const payerDissolve = DynamicProgPayETH.payerWantsOut[this.state.payerDissolveIndex];
+    const payeeDissolve = DynamicProgPayETH.payeeWantsOut[this.state.payeeDissolveIndex];
+    const forceDissolveStartTime = DynamicProgPayETH.forceDissolveStartTime[this.state.forceDissolveStartTimeIndex];
+    const forceDissolveDelay = DynamicProgPayETH.forceDissolveDelay[this.state.forceDissolveDelayIndex];
+
+    const payerMediatorAddress = DynamicProgPayETH.payerMediatorAddress[this.state.payerMediatorAddressIndex];
+    const payeeMediatorAddress = DynamicProgPayETH.payeeMediatorAddress[this.state.payeeMediatorAddressIndex];
+
+    const nextPaymentRequested = DynamicProgPayETH.paymentNumberToRequested[this.state.nextPaymentRequestedIndex];
 
     let mediatorAddressesMatchButNot0x0;
     if (payerMediatorAddress && payeeMediatorAddress){
-    mediatorAddressesMatchButNot0x0 = payerMediatorAddress.value===payeeMediatorAddress.value && payerMediatorAddress !== "0x0000000000000000000000000000000000000000" && payeeMediatorAddress !== "0x0000000000000000000000000000000000000000";
+
+    mediatorAddressesMatchButNot0x0 = payerMediatorAddress.value===payeeMediatorAddress.value && payerMediatorAddress.value !== "0x0000000000000000000000000000000000000000" && payeeMediatorAddress.value !== "0x0000000000000000000000000000000000000000";
     console.log("MatchButNot0x0 "+mediatorAddressesMatchButNot0x0);
     }
 
@@ -206,10 +208,10 @@ class DissolveFunctions extends React.Component {
     let isPayer;
     let isPayee;
 
-    const payee = ProgPayETH.payee[this.props.indexes.payeeIndex];
-    const payer = ProgPayETH.payer[this.props.indexes.payerIndex];
+    const payee = DynamicProgPayETH.payee[this.props.indexes.payeeIndex];
+    const payer = DynamicProgPayETH.payer[this.props.indexes.payerIndex];
 
-    const timeRemaining = ProgPayETH.timeRemaining[this.state.timeRemainingIndex];
+    const timeRemaining = DynamicProgPayETH.timeRemaining[this.state.timeRemainingIndex];
 
     if (payer || payee){
       isPayer = this.props.drizzleState.accounts[0]===payer.value;
@@ -243,7 +245,9 @@ class DissolveFunctions extends React.Component {
 
       {payer && isPayee===true &&
         <div>
-        <p>You indicate that you {payeeDissolve && payeeDissolve.value===true?"want":"do not want"} to dissolve.  <button onClick={this.handleToggleDissolveStatus} disabled={statusToggleDis==="pending"?true:false}>{!statusToggleDis?'Switch':statusToggleDis==="success"?'Success! Switch Again':statusToggleDis}</button></p>
+        <p>You indicate that you {payeeDissolve && payeeDissolve.value===true?"want":"do not want"} to dissolve.  <button onClick={this.handleToggleDissolveStatus} disabled={statusToggleDis==="pending"?true:(nextPaymentRequested && nextPaymentRequested.value===true && payerDissolve && payerDissolve.value===false)?true:false}>{!statusToggleDis?'Switch':statusToggleDis==="success"?'Success! Switch Again':statusToggleDis}</button></p>
+        {nextPaymentRequested && nextPaymentRequested.value===true &&
+        <p>Note: You cannot indicate that you want to dissolve if you've already requested the next payment unless the payer has indicated they want to dissolve.</p>}
         <p>Payer {payerDissolve && payerDissolve.value===true?"wants":"does not want"} to dissolve.</p>
         </div>
       }
@@ -253,7 +257,7 @@ class DissolveFunctions extends React.Component {
 
       {payerDissolve && payerDissolve.value===true && payeeDissolve && payeeDissolve.value===true &&
         <div>
-        <p>Both parties have indicated that they want to dissolve this contract. Clicking "Dissolve" will immediately return any funds remaining in the contract to {payer && isPayer===true?"you":"the payer"} and this contract will terminate.</p>
+        <p>Both parties have indicated that they want to dissolve this contract {nextPaymentRequested && nextPaymentRequested.value===true?"and the next payment has been requested":""}. Clicking "Dissolve" will immediately {nextPaymentRequested && nextPaymentRequested.value===true?"transfer the next payment to the payee and the remaining funds to the payer":"return all remaining funds in the contract to the payer"} and this contract will terminate.</p>
         <button onClick={this.handleDissolveContract} disabled={statusDissolve==="pending"?true:false}>{!statusDissolve?'Force Dissolve':statusDissolve==="success"?'Success! Contract Dissolved':statusDissolve}</button>
         </div>
       }
@@ -264,8 +268,10 @@ class DissolveFunctions extends React.Component {
         <ul>
           <li>Convince other party to agree to dissolve the contract.</li>
           <li>
-          <p>Trigger a cool down timer of {forceDissolveDelay && Number(forceDissolveDelay.value/60/60/24).toFixed(3)} days after which either party can force the dissolution of the contract. The next payment will be split between both parties and the remaining funds transferred to the payer.
-          <button onClick={this.handleForceDissolveContract} disabled={statusForceDissolve==="pending"?true:(timeRemaining && timeRemaining.value>0)?true:false}>{!statusForceDissolve?'Force Dissolve by Timer':statusForceDissolve==="success"?'Success! Timer Started':statusForceDissolve}</button></p>
+          <p>Trigger a cool down timer of {forceDissolveDelay && Number(forceDissolveDelay.value/60/60/24).toFixed(0)} days after which either party can force the dissolution of the contract. If the forced dissolve is successful the next payment will be split between both parties and the remaining funds transferred to the payer.
+          <button onClick={this.handleForceDissolveContract} disabled={statusForceDissolve==="pending"?true:(timeRemaining && timeRemaining.value>0)?true:(nextPaymentRequested && nextPaymentRequested.value===true)?true:false}>{!statusForceDissolve?'Force Dissolve by Timer':statusForceDissolve==="success"?'Success! Timer Started':statusForceDissolve}</button></p>
+          {nextPaymentRequested && nextPaymentRequested.value===true &&
+          <p>Note: You cannot force dissolve if you've already requested the next payment.</p>}
           <p>***The timer can be disabled, even after expiration, if both payer and payee indicate that they want to dissolve the contract.</p>
 
           </li>
