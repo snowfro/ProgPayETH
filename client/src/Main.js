@@ -84,7 +84,7 @@ class Main extends React.Component {
   render(){
 
     console.log(this.state);
-    let contractURL = "https://progpay.org/"+this.state.contractAddress;
+    let contractURL = "https://decentpay.app/"+this.state.contractAddress;
     return (
       <div>
       <h3>Welcome to the Ethereum Progress Payment dApp.</h3>
