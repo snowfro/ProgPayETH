@@ -88,7 +88,7 @@ class Main extends React.Component {
     return (
       <div>
       <h2>Welcome to DecentPay</h2>
-      <h4>Making payment contracts a decent, and decentralized, experience. No more "the check is in the mail".</h4>
+      <h4>A tool for making multi-payment contracts a decent, and decentralized, experience.</h4>
       <p>DecentPay is an Ethereum powered payment utility that allows two parties to enter into a fully transparent multi-payment contract.</p>
       <p>The paying party pre-deposits the full value of promised work into a blockchain validated payment contract that allows both parties to sequientially request
       and approve payments as progress is made. </p>
