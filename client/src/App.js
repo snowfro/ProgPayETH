@@ -33,7 +33,7 @@ class App extends Component {
 
       this.checkIfProgPayETHContract();
 
-    }, 500)
+    }, 1000)
 
 
     // subscribe to changes in the store

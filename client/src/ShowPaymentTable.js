@@ -140,11 +140,11 @@ let contractVal = this.props.contractValue;
 
                     {
                       payee && isPayee===true && nextPayment && Number(nextPayment.value)===index+1 && payment.requested && payment.requested.value===false &&
-                      <button className="btn btn-primary" onClick={this.handleRequestPayment} disabled = {statusReq==="pending"?true:false}>{!statusReq?'Request':statusReq==="success"?'Success!':statusReq}</button>
+                      <button className="btn btn-primary btn-sm" onClick={this.handleRequestPayment} disabled = {statusReq==="pending"?true:false}>{!statusReq?'Request':statusReq==="success"?'Success!':statusReq}</button>
                     }
                     {
                       payer && isPayer===true && nextPayment && Number(nextPayment.value)===index+1 && payment.requested && payment.requested.value===true &&
-                      <button className="btn btn-primary" onClick={this.handleApprovePayment} disabled = {statusApp==="pending"?true:false}>{!statusApp?'Approve':statusApp==="success"?'Success!':statusApp}</button>
+                      <button className="btn btn-primary btn-sm" onClick={this.handleApprovePayment} disabled = {statusApp==="pending"?true:false}>{!statusApp?'Approve':statusApp==="success"?'Success!':statusApp}</button>
                     }
                     </p>
                     </div>
