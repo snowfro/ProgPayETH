@@ -234,31 +234,33 @@ class DissolveFunctions extends React.Component {
       <br/>
       <br/>
       <hr/>
+      <div className="container">
       <h4>Contract Dissolution</h4>
 
       {payer && isPayer===true &&
         <div>
-        <p>You indicate that you {payerDissolve && payerDissolve.value===true?"want":"do not want"} to dissolve.  <button onClick={this.handleToggleDissolveStatus} disabled={statusToggleDis==="pending"?true:false}>{!statusToggleDis?'Switch':statusToggleDis==="success"?'Switch':statusToggleDis}</button></p>
-        <p>Payee {payeeDissolve && payeeDissolve.value===true?"wants":"does not want"} to dissolve.</p>
+        <p>You indicate that you {payerDissolve && payerDissolve.value===true?"want":"do not want"} to dissolve. Click "switch" to change your position.  <button className="btn btn-sm btn-primary" onClick={this.handleToggleDissolveStatus} disabled={statusToggleDis==="pending"?true:false}>{!statusToggleDis?'Switch':statusToggleDis==="success"?'Switch':statusToggleDis}</button></p>
+        <p>Payee {payeeDissolve && payeeDissolve.value===true?"has moved":"has not moved"} to dissolve.</p>
         </div>
       }
 
-      {payer && isPayee===true &&
+      {payee && isPayee===true &&
         <div>
-        <p>You indicate that you {payeeDissolve && payeeDissolve.value===true?"want":"do not want"} to dissolve.  <button onClick={this.handleToggleDissolveStatus} disabled={statusToggleDis==="pending"?true:(nextPaymentRequested && nextPaymentRequested.value===true && payerDissolve && payerDissolve.value===false)?true:false}>{!statusToggleDis?'Switch':statusToggleDis==="success"?'Success! Switch Again':statusToggleDis}</button></p>
+        <p>You indicate that you {payeeDissolve && payeeDissolve.value===true?"want":"do not want"} to dissolve. Click "switch" to change your position.  <button className="btn btn-sm btn-primary" onClick={this.handleToggleDissolveStatus} disabled={statusToggleDis==="pending"?true:(nextPaymentRequested && nextPaymentRequested.value===true && payerDissolve && payerDissolve.value===false)?true:false}>{!statusToggleDis?'Switch':statusToggleDis==="success"?'Success! Switch Again':statusToggleDis}
+        </button></p>
         {nextPaymentRequested && nextPaymentRequested.value===true &&
-        <p>Note: You cannot indicate that you want to dissolve if you've already requested the next payment unless the payer has indicated they want to dissolve.</p>}
-        <p>Payer {payerDissolve && payerDissolve.value===true?"wants":"does not want"} to dissolve.</p>
+        <p>Note: You cannot move to dissolve if you've already requested the next payment unless the payer has indicated they want to dissolve first.</p>}
+        <p>Payer {payerDissolve && payerDissolve.value===true?"has moved":"has not moved"} to dissolve.</p>
         </div>
       }
       { timeRemaining && timeRemaining.value>0 && payerDissolve && payerDissolve.value===false && payeeDissolve && payeeDissolve.value===false &&
-        <button onClick={this.handleResetDissolveContractTimer} disabled={statusDissolveResetTimer==="pending"?true:false}>{!statusDissolveResetTimer?'Disarm Timer':statusDissolveResetTimer==="success"?'Success! Timer Disarmed':statusDissolveResetTimer}</button>
+        <button className="btn btn-sm btn-primary" onClick={this.handleResetDissolveContractTimer} disabled={statusDissolveResetTimer==="pending"?true:false}>{!statusDissolveResetTimer?'Disarm Timer':statusDissolveResetTimer==="success"?'Success! Timer Disarmed':statusDissolveResetTimer}</button>
       }
 
       {payerDissolve && payerDissolve.value===true && payeeDissolve && payeeDissolve.value===true &&
         <div>
         <p>Both parties have indicated that they want to dissolve this contract {nextPaymentRequested && nextPaymentRequested.value===true?"and the next payment has been requested":""}. Clicking "Dissolve" will immediately {nextPaymentRequested && nextPaymentRequested.value===true?"transfer the next payment to the payee and the remaining funds to the payer":"return all remaining funds in the contract to the payer"} and this contract will terminate.</p>
-        <button onClick={this.handleDissolveContract} disabled={statusDissolve==="pending"?true:false}>{!statusDissolve?'Force Dissolve':statusDissolve==="success"?'Success! Contract Dissolved':statusDissolve}</button>
+        <button className="btn shadow-lg btn-danger btn-sm btn-block" onClick={this.handleDissolveContract} disabled={statusDissolve==="pending"?true:false}>{!statusDissolve?'Force Dissolve':statusDissolve==="success"?'Success! Contract Dissolved':statusDissolve}</button>
         </div>
       }
 
@@ -268,8 +270,8 @@ class DissolveFunctions extends React.Component {
         <ul>
           <li>Convince other party to agree to dissolve the contract.</li>
           <li>
-          <p>Trigger a cool down timer of {forceDissolveDelay && Number(forceDissolveDelay.value/60/60/24).toFixed(0)} days after which either party can force the dissolution of the contract. If the forced dissolve is successful the next payment will be split between both parties and the remaining funds transferred to the payer.
-          <button onClick={this.handleForceDissolveContract} disabled={statusForceDissolve==="pending"?true:(timeRemaining && timeRemaining.value>0)?true:(nextPaymentRequested && nextPaymentRequested.value===true)?true:false}>{!statusForceDissolve?'Force Dissolve by Timer':statusForceDissolve==="success"?'Success! Timer Started':statusForceDissolve}</button></p>
+          <p>Trigger a cool down timer of {forceDissolveDelay && Number(forceDissolveDelay.value/60/60/24).toFixed(0)} days after which either party can force the dissolution of the contract. If the contract is dissolved using this method the next payment will be split between both parties and the remaining funds transferred to the payer.
+          <button className="btn btn-sm btn-danger" onClick={this.handleForceDissolveContract} disabled={statusForceDissolve==="pending"?true:(timeRemaining && timeRemaining.value>0)?true:(payee && isPayee==="true" && nextPaymentRequested && nextPaymentRequested.value===true)?true:false}>{!statusForceDissolve?'Force Dissolve by Timer':statusForceDissolve==="success"?'Success! Timer Started':statusForceDissolve}</button></p>
           {nextPaymentRequested && nextPaymentRequested.value===true &&
           <p>Note: You cannot force dissolve if you've already requested the next payment.</p>}
           <p>***The timer can be disabled, even after expiration, if both payer and payee indicate that they want to dissolve the contract.</p>
@@ -284,10 +286,10 @@ class DissolveFunctions extends React.Component {
               If both parties have designated the same mediator address a button allowing either party to force dissolve the contract to a mediator will appear below.
               <br/>
               <input type="text" placeholder="0x....." className="form-control" aria-label="Contact Method" aria-describedby="contact-method" onChange={this.handleChangeMediatorAddressInput.bind(this)}/>
-              <button onClick={this.handleSetMediatorAddress} disabled={statusSetMediator==="pending"?true:false}>{!statusSetMediator?'Set New Mediator Address':statusSetMediator==="success"?'Success!':statusSetMediator}</button>
+              <button className="btn btn-sm btn-warning" onClick={this.handleSetMediatorAddress} disabled={statusSetMediator==="pending"?true:false}>{!statusSetMediator?'Set New Mediator Address':statusSetMediator==="success"?'Success!':statusSetMediator}</button>
               <br/>
               {mediatorAddressesMatchButNot0x0 &&
-                <button onClick={this.handleForceDissolveContract2} disabled={statusForceDissolve2==="pending"?true:!mediatorAddressesMatchButNot0x0?true:false}>{!statusForceDissolve2&&!mediatorAddressesMatchButNot0x0?'Cannot Dissolve Mediator Addresses Must Match':!statusForceDissolve2&&mediatorAddressesMatchButNot0x0?'Force Dissolve to Mediator':statusForceDissolve2==="success"?'Success! Contract Dissolved':statusForceDissolve2}</button>
+                <button className="btn btn-sm btn-warning" onClick={this.handleForceDissolveContract2} disabled={statusForceDissolve2==="pending"?true:!mediatorAddressesMatchButNot0x0?true:false}>{!statusForceDissolve2&&!mediatorAddressesMatchButNot0x0?'Cannot Dissolve Mediator Addresses Must Match':!statusForceDissolve2&&mediatorAddressesMatchButNot0x0?'Force Dissolve to Mediator':statusForceDissolve2==="success"?'Success! Contract Dissolved':statusForceDissolve2}</button>
               }
             </li>
         </ul>
@@ -300,10 +302,11 @@ class DissolveFunctions extends React.Component {
         Once the timer has expired either party can click the "Force Dissolve" button that will appear below to terminate the contract. This will split the last payment between the two parties and transfer remaining funds back to payer.</p>
         <p>Note: Timer can be disarmed by clicking the "Disarm Timer" button above. <b>The button will ONLY appear if both parties indicate they <i>do not</i> want to dissolve.</b></p>
         {timeRemaining && timeRemaining.value>100000000000000 &&
-          <button onClick={this.handleForceDissolveContract} disabled={statusForceDissolve==="pending"?true:false}>{!statusForceDissolve?'Force Dissolve':statusForceDissolve==="success"?'Success! Contract Dissolved':statusForceDissolve}</button>
+          <button className="btn shadow-lg btn-danger btn-sm btn-block"onClick={this.handleForceDissolveContract} disabled={statusForceDissolve==="pending"?true:false}>{!statusForceDissolve?'Force Dissolve':statusForceDissolve==="success"?'Success! Contract Dissolved':statusForceDissolve}</button>
         }
         </div>
       }
+      </div>
       </div>
     );
 }

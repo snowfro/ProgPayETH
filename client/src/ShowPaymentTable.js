@@ -139,7 +139,7 @@ let contractVal = this.props.contractValue;
                 {paymentDetails.map(function(payment, index){
                     return (
 
-                      <div className={payment.requested && payment.approved && (payment.requested.value===false?"alert alert-danger":payment.requested.value===true && payment.approved.value===false?"alert alert-warning":"alert alert-success")} role="alert" key={index}>Payment #{index+1} in the amount of {this.props.contractId==="DynamicProgPayETH"?"":"$"}{parseFloat((web3.utils.fromWei((contractVal/numPayments).toString(), 'ether'))).toFixed(3)}{this.props.contractId==="DynamicProgPayETH"?"Ξ":""}
+                      <div className={payment.requested && payment.approved && (payment.requested.value===false?"alert alert-primary":payment.requested.value===true && payment.approved.value===false?"alert alert-warning":"alert alert-success")} role="alert" key={index}>Payment #{index+1} in the amount of {this.props.contractId==="DynamicProgPayETH"?"":"$"}{parseFloat((web3.utils.fromWei((contractVal/numPayments).toString(), 'ether'))).toFixed(3)}{this.props.contractId==="DynamicProgPayETH"?"Ξ":""}
                      {payment.requested && (payment.requested.value===false?" has not been requested.   ": payment.approved && (payment.approved.value===true)?" has been requested and paid!":" has been requested and is awaiting approval/payment.   ")}
 
                     {
@@ -148,7 +148,7 @@ let contractVal = this.props.contractValue;
                     }
                     {
                       payer && isPayer===true && nextPayment && Number(nextPayment.value)===index+1 && payment.requested && payment.requested.value===true &&
-                      <button className="btn btn-primary btn-sm" onClick={this.handleApprovePayment} disabled = {statusApp==="pending"?true:false}>{!statusApp?'Approve':statusApp==="success"?'Success!':statusApp}</button>
+                      <button className="btn btn-warning btn-sm" onClick={this.handleApprovePayment} disabled = {statusApp==="pending"?true:false}>{!statusApp?'Approve':statusApp==="success"?'Success!':statusApp}</button>
                     }
                     </div>
 

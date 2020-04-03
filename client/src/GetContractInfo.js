@@ -3,6 +3,8 @@ import React from "react";
 import ShowPaymentTable from "./ShowPaymentTable";
 import DissolveFunctions from "./DissolveFunctions";
 
+import HowItWorks from './HowItWorks';
+
 import Web3 from 'web3';
 const web3 = new Web3(Web3.givenProvider || "http://localhost:8545");
 
@@ -10,12 +12,16 @@ class GetContractInfo extends React.Component {
 
 constructor(props){
   super(props);
-  this.state = {dissolve:false, ethBalance:null};
+  this.state = {dissolve:false, ethBalance:null, howItWorks:false};
   this.handleApproveDeposit = this.handleApproveDeposit.bind(this);
   this.handleInitialDeposit = this.handleInitialDeposit.bind(this);
+  this.handleHowItWorks = this.handleHowItWorks.bind(this);
   this.handleDissolveFunctionsToggle = this.handleDissolveFunctionsToggle.bind(this);
 }
 
+handleHowItWorks(){
+  this.setState({howItWorks:!this.state.howItWorks});
+}
 
 
  componentDidMount() {
@@ -249,7 +255,7 @@ render() {
           className="btn btn-secondary btn-sm"
           onClick={approvedToTransfer && approvedToTransfer.value===false?this.handleApproveDeposit:this.handleInitialDeposit}
           disabled = {statusAppDep ==="pending" || statusDep==="pending" || !enoughFunds ?true:false}>
-          {approvedToTransfer && approvedToTransfer.value===false && !statusAppDep?"Approve Deposit": !statusDep?'Fund Contract':statusDep==="success" || statusAppDep==="success"?'Success!':"Processing"}
+          {approvedToTransfer && approvedToTransfer.value===false && !statusAppDep?"Approve Deposit":approvedToTransfer && approvedToTransfer.value===false && statusAppDep==="pending"?"Processing":!statusDep?'Fund Contract':statusDep==="success" || statusAppDep==="success"?'Success!':"Processing"}
           </button>
         </div>:"No":"Yes"}
       </div>
@@ -340,10 +346,22 @@ render() {
       />
     }
     <br/>
-    <br/>
     { contractFunded && contractFunded.value===true &&
-    <button onClick={this.handleDissolveFunctionsToggle}>{this.state.dissolve?"Hide Dissolve Functions":"Show Dissolve Functions"}</button>
+      <div className="container">
+    <button className="btn shadow-lg btn-danger btn-sm btn-block" onClick={this.handleDissolveFunctionsToggle}>{this.state.dissolve?"Hide Dissolve Functions":"Show Dissolve Functions"}</button>
+    </div>
     }
+
+    <div className="text-center">
+    <br/>
+    <button type="button" className="btn btn-outline-primary btn-sm" onClick={this.handleHowItWorks}>How It Works</button>
+      </div>
+
+    {this.state.howItWorks &&
+      <HowItWorks />
+    }
+
+
       </div>
       </div>
       </div>
