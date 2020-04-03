@@ -127,7 +127,7 @@ class App extends Component {
       />
 
     }
-      {!isContract &&
+      {contractName && !isContract &&
       <p>This is not a supported contract.</p>
     }
       </div>

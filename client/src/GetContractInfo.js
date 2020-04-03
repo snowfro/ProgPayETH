@@ -10,7 +10,7 @@ class GetContractInfo extends React.Component {
 
 constructor(props){
   super(props);
-  this.state = {dissolve:false};
+  this.state = {dissolve:false, ethBalance:null};
   this.handleApproveDeposit = this.handleApproveDeposit.bind(this);
   this.handleInitialDeposit = this.handleInitialDeposit.bind(this);
   this.handleDissolveFunctionsToggle = this.handleDissolveFunctionsToggle.bind(this);
@@ -35,12 +35,20 @@ constructor(props){
     var nextPaymentIndex = contract.methods["nextPayment"].cacheCall();
     var remainingBalanceIndex = contract.methods["remainingBalance"].cacheCall();
     var terminatedIndex = contract.methods["contractTerminated"].cacheCall();
+    //var ethBalance = drizzleState.accountBalances[drizzleState.accounts[0]];
 
     if (this.props.contractId==="DynamicProgPayDAI") {
       var approvedToTransferIndex = contract.methods["approvedToTransfer"].cacheCall();
       var accountDAIBalanceIndex = drizzle.contracts.DAIContract.methods['balanceOf'].cacheCall(drizzleState.accounts[0]);
       this.setState({approvedToTransferIndex, accountDAIBalanceIndex});
     }
+    var ethBalance;
+    setInterval(()=>{
+    web3.eth.getBalance(drizzleState.accounts[0])
+    .then((result)=>{
+      this.setState({ethBalance:result});
+    });
+  },1000);
 
     this.setState({payeeIndex, payerIndex, contractValueIndex, numberOfPaymentsIndex, fundedIndex, nextPaymentIndex, remainingBalanceIndex, terminatedIndex});
  }
@@ -132,8 +140,10 @@ render() {
   const remainingBalance = contract.remainingBalance[this.state.remainingBalanceIndex];
   const terminated = contract.contractTerminated[this.state.terminatedIndex];
 
-  var ethBalance = drizzleState.accountBalances[drizzleState.accounts[0]];
-  console.log("ETH Balance "+ethBalance);
+  //var ethBalance = drizzleState.accountBalances[drizzleState.accounts[0]];
+
+  let ethBalance = this.state.ethBalance;
+  console.log("ETH Balance "+this.state.ethBalance);
   var approvedToTransfer;
   var daiBalance;
 
@@ -156,8 +166,8 @@ render() {
     }
   }
 
-  if (contractValue && this.props.contractId==="DynamicProgPayETH"){
-    ethBalance = drizzleState.accountBalances[drizzleState.accounts[0]];
+  if (ethBalance && contractValue && this.props.contractId==="DynamicProgPayETH"){
+    //ethBalance = drizzleState.accountBalances[drizzleState.accounts[0]];
     enoughFunds = ethBalance >= Number(contractValue.value);
   }
   console.log("contract value "+contractValue2);
@@ -207,7 +217,7 @@ render() {
           <small className="text-muted">DAI Balance: ${daiBalance && parseFloat((web3.utils.fromWei((daiBalance.value).toString(), 'ether'))).toFixed(3)}{!enoughFunds && (contractFunded && contractFunded.value===false)?" (Insufficient DAI to Fund)":""}</small>
           }
           {currency==="ETH" &&
-          <small className="text-muted">Balance: {parseFloat((web3.utils.fromWei((ethBalance).toString(), 'ether'))).toFixed(3)}Ξ {!enoughFunds && (contractFunded && contractFunded.value===false) && (terminated && !terminated.value)?" (Insufficient ETH to Fund)":""}</small>
+          <small className="text-muted">Balance: {ethBalance && parseFloat((web3.utils.fromWei((ethBalance).toString(), 'ether'))).toFixed(3)}Ξ {!enoughFunds && (contractFunded && contractFunded.value===false) && (terminated && !terminated.value)?" (Insufficient ETH to Fund)":""}</small>
           }
           </div>
           </div>
@@ -220,7 +230,7 @@ render() {
         <small className="text-muted">DAI Balance: ${daiBalance && parseFloat((web3.utils.fromWei((daiBalance.value).toString(), 'ether'))).toFixed(3)}</small>
         }
         {currency==="ETH" &&
-        <small className="text-muted">Balance: {parseFloat((web3.utils.fromWei((ethBalance).toString(), 'ether'))).toFixed(3)}Ξ</small>
+        <small className="text-muted">Balance: {ethBalance && parseFloat((web3.utils.fromWei((ethBalance).toString(), 'ether'))).toFixed(3)}Ξ</small>
         }
         </div>
         </div>
