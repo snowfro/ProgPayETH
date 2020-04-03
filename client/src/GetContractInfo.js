@@ -11,6 +11,7 @@ class GetContractInfo extends React.Component {
 constructor(props){
   super(props);
   this.state = {dissolve:false};
+  this.handleApproveDeposit = this.handleApproveDeposit.bind(this);
   this.handleInitialDeposit = this.handleInitialDeposit.bind(this);
   this.handleDissolveFunctionsToggle = this.handleDissolveFunctionsToggle.bind(this);
 }
@@ -20,8 +21,10 @@ constructor(props){
  componentDidMount() {
     //access drizzle props within componentDidMount
     const {drizzle} = this.props;
+    const {drizzleState} = this.props;
 
-    const contract = drizzle.contracts.DynamicProgPayETH;
+    const contract = drizzle.contracts[this.props.contractId];
+
 
 
     var payeeIndex = contract.methods["payee"].cacheCall();
@@ -33,6 +36,12 @@ constructor(props){
     var remainingBalanceIndex = contract.methods["remainingBalance"].cacheCall();
     var terminatedIndex = contract.methods["contractTerminated"].cacheCall();
 
+    if (this.props.contractId==="DynamicProgPayDAI") {
+      var approvedToTransferIndex = contract.methods["approvedToTransfer"].cacheCall();
+      var accountDAIBalanceIndex = drizzle.contracts.DAIContract.methods['balanceOf'].cacheCall(drizzleState.accounts[0]);
+      this.setState({approvedToTransferIndex, accountDAIBalanceIndex});
+    }
+
     this.setState({payeeIndex, payerIndex, contractValueIndex, numberOfPaymentsIndex, fundedIndex, nextPaymentIndex, remainingBalanceIndex, terminatedIndex});
  }
 
@@ -40,12 +49,33 @@ handleDissolveFunctionsToggle(){
   this.setState({dissolve:!this.state.dissolve});
 }
 
+ handleApproveDeposit(){
+   const {drizzle, drizzleState} = this.props;
+   const contract = drizzle.contracts[this.props.contractId];
+   const contractValue = drizzleState.contracts[this.props.contractId].contractValueInWei[this.state.contractValueIndex];
+   console.log("contract address: "+contract.address+" contractValue: "+contractValue);
+   const stackIdAppDep = drizzle.contracts.DAIContract.methods['approve'].cacheSend(contract.address, contractValue.value, {from: drizzleState.accounts[0], value:0});
+   this.setState({ stackIdAppDep });
+ }
 
+ getStatusAppDep(){
+   const { transactions, transactionStack } = this.props.drizzleState;
+   // get the transaction hash using our saved `stackId`
+   const txHash = transactionStack[this.state.stackIdDep];
+   // if transaction hash does not exist, don't display anything
+   if (!txHash) return null;
+
+   if (transactions[txHash]){
+   console.log(transactions[txHash].status);
+   return transactions[txHash].status;
+  }
+ }
  handleInitialDeposit(){
    const {drizzle, drizzleState} = this.props;
-   const contract = drizzle.contracts.DynamicProgPayETH;
-   const contractValue = drizzleState.contracts.DynamicProgPayETH.contractValueInWei[this.state.contractValueIndex];
-   const stackIdDep = contract.methods['initialDeposit'].cacheSend({from: drizzleState.accounts[0], value:contractValue.value});
+   const contract = drizzle.contracts[this.props.contractId];
+   const contractValue = drizzleState.contracts[this.props.contractId].contractValueInWei[this.state.contractValueIndex];
+   const amountToSend = this.props.contractId==="DynamicProgPayETH"?contractValue.value:0;
+   const stackIdDep = contract.methods['initialDeposit'].cacheSend({from: drizzleState.accounts[0], value:amountToSend});
    this.setState({ stackIdDep });
  }
 
@@ -65,9 +95,10 @@ handleDissolveFunctionsToggle(){
 
 render() {
   const { drizzle, drizzleState } = this.props;
-  const { DynamicProgPayETH } = this.props.drizzleState.contracts;
+  const contract = this.props.drizzleState.contracts[this.props.contractId];
   console.log(drizzle);
   console.log(drizzleState);
+  console.log(this.props.contractId);
   //console.log(drizzle.contracts.DynamicProgPayETH.address);
   let isPayer;
   let isPayee;
@@ -92,21 +123,58 @@ render() {
 
 
   //console.log(drizzleState);
-  const payee = DynamicProgPayETH.payee[this.state.payeeIndex];
-  const payer = DynamicProgPayETH.payer[this.state.payerIndex];
-  const contractValue = DynamicProgPayETH.contractValueInWei[this.state.contractValueIndex];
-  const numberOfPayments = DynamicProgPayETH.numberOfPayments[this.state.numberOfPaymentsIndex];
-  const contractFunded = DynamicProgPayETH.contractFunded[this.state.fundedIndex];
-  const nextPayment = DynamicProgPayETH.nextPayment[this.state.nextPaymentIndex];
-  const remainingBalance = DynamicProgPayETH.remainingBalance[this.state.remainingBalanceIndex];
-  const terminated = DynamicProgPayETH.contractTerminated[this.state.terminatedIndex];
+  const payee = contract.payee[this.state.payeeIndex];
+  const payer = contract.payer[this.state.payerIndex];
+  const contractValue = contract.contractValueInWei[this.state.contractValueIndex];
+  const numberOfPayments = contract.numberOfPayments[this.state.numberOfPaymentsIndex];
+  const contractFunded = contract.contractFunded[this.state.fundedIndex];
+  const nextPayment = contract.nextPayment[this.state.nextPaymentIndex];
+  const remainingBalance = contract.remainingBalance[this.state.remainingBalanceIndex];
+  const terminated = contract.contractTerminated[this.state.terminatedIndex];
+
+  var ethBalance = drizzleState.accountBalances[drizzleState.accounts[0]];
+  console.log("ETH Balance "+ethBalance);
+  var approvedToTransfer;
+  var daiBalance;
+
+  if (this.props.contractId==="DynamicProgPayDAI"){
+    approvedToTransfer = contract.approvedToTransfer[this.state.approvedToTransferIndex];
+    daiBalance = drizzleState.contracts.DAIContract.balanceOf[this.state.accountDAIBalanceIndex];
+    console.log(approvedToTransfer && "ATT "+approvedToTransfer.value);
+    console.log(daiBalance && "DAI Balance In Wei"+daiBalance.value);
+  }
+
+  var enoughFunds;
+  var contractValue2;
+  if (contractValue){
+    contractValue2 = contractValue.value;
+  }
+  if (contractValue && this.props.contractId==="DynamicProgPayDAI"){
+    daiBalance = drizzleState.contracts.DAIContract.balanceOf[this.state.accountDAIBalanceIndex];
+    if (daiBalance){
+      enoughFunds = Number(daiBalance.value) >= Number(contractValue.value);
+    }
+  }
+
+  if (contractValue && this.props.contractId==="DynamicProgPayETH"){
+    ethBalance = drizzleState.accountBalances[drizzleState.accounts[0]];
+    enoughFunds = ethBalance >= Number(contractValue.value);
+  }
+  console.log("contract value "+contractValue2);
+  console.log("enoughFunds? "+enoughFunds);
+
+  let currency = this.props.contractId==="DynamicProgPayETH"?"ETH":"DAI";
 
   if (nextPayment){
     //console.log("NP "+nextPayment.value);
   }
 
-  if (payer && payee){
+  if (payer){
     isPayer = this.props.drizzleState.accounts[0]===payer.value;
+    //console.log(isPayer?"Payer":isPayee?"Payee":"Neither Payer or Payee");
+  }
+
+  if (payee){
     isPayee = this.props.drizzleState.accounts[0]===payee.value;
     //console.log(isPayer?"Payer":isPayee?"Payee":"Neither Payer or Payee");
   }
@@ -115,6 +183,7 @@ render() {
 
 
   let statusDep = this.getStatusDep();
+  let statusAppDep = this.getStatusAppDep();
 
 
     return (
@@ -126,51 +195,56 @@ render() {
           <small className="text-muted"> simple transparent progress payments</small></h2>
         </div>
         <br/>
-        <h4> Dashboard for contract <small className="text-muted font-weight-lighter"><a href={etherscanURL}>{drizzle.contracts.DynamicProgPayETH.address}</a></small></h4>
+        <h4> Dashboard for {currency} contract <small className="text-muted font-weight-lighter"><a href={etherscanURL}>{drizzle.contracts.DynamicProgPayETH.address}</a></small></h4>
+        <br/>
         <hr/>
+        <br/>
         {payer && isPayer===true &&
-          <div>
+          <div className="container">
           <div className="alert alert-info" role="alert">
-          <h5 className="alert-heading">You are the <i>payer</i> on this contract!</h5>
-          The <i>payee</i> is {payee && payee.value}.
-
-              </div>
-            </div>
+          <h5 className="alert-heading">You are the <i>payer</i> on this contract!</h5> <p>The <i>payee</i> is {payee && payee.value}.</p>
+          {currency === "DAI" &&
+          <small className="text-muted">DAI Balance: ${daiBalance && parseFloat((web3.utils.fromWei((daiBalance.value).toString(), 'ether'))).toFixed(3)}{!enoughFunds && (contractFunded && contractFunded.value===false)?" (Insufficient DAI to Fund)":""}</small>
           }
-      {
-        payee && isPayee===true &&
+          {currency==="ETH" &&
+          <small className="text-muted">Balance: {parseFloat((web3.utils.fromWei((ethBalance).toString(), 'ether'))).toFixed(3)}Ξ {!enoughFunds && (contractFunded && contractFunded.value===false) && (terminated && !terminated.value)?" (Insufficient ETH to Fund)":""}</small>
+          }
+          </div>
+          </div>
+          }
+        {payee && isPayee===true &&
+        <div className="container">
         <div className="alert alert-info" role="alert">
-        <h5 className="alert-heading">You are the <i>payee</i> on this contract!</h5>
-        The <i>payer</i> is {payer && payer.value}.
+        <h5 className="alert-heading">You are the <i>payee</i> on this contract!</h5> <p>The <i>payer</i> is {payer && payer.value}.</p>
+        {currency==="DAI" &&
+        <small className="text-muted">DAI Balance: ${daiBalance && parseFloat((web3.utils.fromWei((daiBalance.value).toString(), 'ether'))).toFixed(3)}</small>
+        }
+        {currency==="ETH" &&
+        <small className="text-muted">Balance: {parseFloat((web3.utils.fromWei((ethBalance).toString(), 'ether'))).toFixed(3)}Ξ</small>
+        }
+        </div>
         </div>
       }
 
       <div className="container">
       <div className="row text-center">
-      <div className="col">
-      <div className="alert alert-secondary" role="alert">
-      <h6 className="alert-heading">Contract Value</h6>
-      <hr/>
-      {contractValue && (web3.utils.fromWei((contractValue.value).toString(), 'ether'))}Ξ
-      </div>
-      </div>
-      <div className="col">
-      <div className="alert alert-secondary" role="alert">
-      <h6 className="alert-heading">Number of Payments</h6>
-      <hr/>
-      {numberOfPayments && numberOfPayments.value}
-      </div>
-      </div>
+
       <div className="col">
       <div className="alert alert-secondary" role="alert">
       <h6 className="alert-heading">Contract Funded?</h6>
       <hr/>
       {contractFunded && contractFunded.value===false?(payer && isPayer===true && contractFunded && contractFunded.value===false && terminated && terminated.value===false)?
         <div>
-          <button className="btn btn-secondary btn-sm" onClick={this.handleInitialDeposit} disabled = {statusDep==="pending"?true:false}>{!statusDep?'Fund Contract':statusDep==="success"?'Success!':statusDep}</button>
+          <button
+          className="btn btn-secondary btn-sm"
+          onClick={approvedToTransfer && approvedToTransfer.value===false?this.handleApproveDeposit:this.handleInitialDeposit}
+          disabled = {statusAppDep ==="pending" || statusDep==="pending" || !enoughFunds ?true:false}>
+          {approvedToTransfer && approvedToTransfer.value===false && !statusAppDep?"Approve Deposit": !statusDep?'Fund Contract':statusDep==="success" || statusAppDep==="success"?'Success!':"Processing"}
+          </button>
         </div>:"No":"Yes"}
       </div>
       </div>
+
       <div className="col">
       <div className={terminated && terminated.value===false?"alert alert-success":"alert alert-danger"} role="alert">
       <h6 className="alert-heading">Contract Status</h6>
@@ -178,39 +252,81 @@ render() {
       {terminated && terminated.value===false?"Active":"Terminated"}
       </div>
       </div>
-
       </div>
       </div>
 
+      <div className="container">
+      <div className="row text-center">
+      <div className="col">
+      <div className="alert alert-secondary" role="alert">
+      <h6 className="alert-heading">Contract Value</h6>
+      <hr/>
+      {this.props.contractId==="DynamicProgPayETH"?"":"$"}{contractValue && parseFloat((web3.utils.fromWei((contractValue.value).toString(), 'ether'))).toFixed(3)}{this.props.contractId==="DynamicProgPayETH"?"Ξ":""}
+      </div>
+      </div>
 
-      {nextPayment &&
-          <div>
-            <p>Next payment: {nextPayment && Number(nextPayment.value)===0?"NONE":nextPayment.value}.</p>
-          </div>
-      }
+      <div className="col">
+      <div className={"alert alert-secondary"} role="alert">
+      <h6 className="alert-heading">Remaining Balance</h6>
+      <hr/>
       {((contractFunded && contractFunded.value===true) || (terminated && terminated.value===true)) &&
         <div>
-          <p>Remaining balance to be paid on this contract: {remainingBalance && (web3.utils.fromWei((remainingBalance.value).toString(), 'ether'))}Ξ.</p>
+        {this.props.contractId==="DynamicProgPayETH"?"":"$"}{remainingBalance && parseFloat((web3.utils.fromWei((remainingBalance.value).toString(), 'ether'))).toFixed(3)}{this.props.contractId==="DynamicProgPayETH"?"Ξ":""}
         </div>
       }
+      {contractFunded && contractFunded.value===false && terminated && !terminated.value &&
+      <div>
+      Waiting for Funding
+      </div>
+      }
+      </div>
+      </div>
+
+      <div className="col">
+      <div className="alert alert-secondary" role="alert">
+      <h6 className="alert-heading">Number of Payments</h6>
+      <hr/>
+      {numberOfPayments && numberOfPayments.value}
+      </div>
+      </div>
+
+      <div className="col">
+      <div className={"alert alert-secondary"} role="alert">
+      <h6 className="alert-heading">Next Payment Number</h6>
+      <hr/>
+      {nextPayment &&
+        <div>
+          {nextPayment && Number(nextPayment.value)===0?"Finished":nextPayment.value}
+          </div>
+      }
+      </div>
+      </div>
+
+      </div>
+      <br/>
+      <br/>
+      </div>
 
 
-    { numberOfPayments && contractFunded && contractFunded.value===true &&
+
+    { numberOfPayments && contractFunded && contractFunded.value===true && contractValue && numberOfPayments &&
       <ShowPaymentTable
       drizzle={this.props.drizzle}
       drizzleState={this.props.drizzleState}
       indexes={this.state}
       numberOfPayments={numberOfPayments.value}
       contractValue={contractValue.value}
+      contractId = {this.props.contractId}
       />
     }
 
-    { this.state.dissolve && contractFunded && contractFunded.value===true &&
+    { this.state.dissolve && contractFunded && contractFunded.value===true && nextPayment &&
       <DissolveFunctions
       drizzle={this.props.drizzle}
       drizzleState={this.props.drizzleState}
       indexes={this.state}
       nextPayment={nextPayment.value}
+      contractId={this.props.contractId}
       />
     }
     <br/>

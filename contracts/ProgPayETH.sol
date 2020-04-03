@@ -28,8 +28,7 @@ contract ProgPayETH {
 
     //second option to dissolve by providing a mediator who will mediate fund distribution outside of contract. parties signal
     //their choice using setMediatorAddress() and they must match in order to enable dissolution
-    //address payable public payerMediatorAddress=0x0000000000000000000000000000000000000000;
-    //address payable public payeeMediatorAddress=0x0000000000000000000000000000000000000001;
+    
     address payable public payerMediatorAddress;
     address payable public payeeMediatorAddress;
 
@@ -46,7 +45,7 @@ contract ProgPayETH {
     bool public contractTerminated;
     uint256 public nextPayment;
 
-    string public contractName = "Progress Payments ETH";
+    string public contractName = "DecentPay ETH";
 
     uint quotient;
 
@@ -80,7 +79,7 @@ contract ProgPayETH {
 
     //payer desosits contract value here, triggering beginning of contract payment process. requires deposit amount to match contract value exactly
     function initialDeposit() public payable returns(bool) {
-        require(msg.sender==payer);
+        require(msg.sender==payer, "You must be payer.");
         require(msg.value==contractValueInWei);
         require(!contractFunded);
         require(!contractTerminated);
@@ -92,7 +91,7 @@ contract ProgPayETH {
     function requestPayment() public returns(bool){
         require(!payeeWantsOut);
         require(!contractTerminated);
-        require(contractFunded);
+        require(contractFunded, "Contract must be funded");
         require(msg.sender==payee);
         require(paymentNumberToRequested[nextPayment]==false);
         require(nextPayment != 0);
@@ -158,7 +157,7 @@ contract ProgPayETH {
         require(!contractTerminated);
         //require(payeeWantsOut || payerWantsOut);
         if(paymentNumberToRequested[nextPayment]){
-            require(msg.sender==payer || (msg.sender==payer && payerMediatorAddress != address(0) && payeeMediatorAddress != address(0) && payerMediatorAddress == payeeMediatorAddress));
+            require(msg.sender==payer || (msg.sender==payee && payerMediatorAddress != address(0) && payeeMediatorAddress != address(0) && payerMediatorAddress == payeeMediatorAddress));
         }else {
             require(msg.sender==payer || msg.sender==payee);
         }

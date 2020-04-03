@@ -8,12 +8,13 @@ import { Route, BrowserRouter as Router } from 'react-router-dom'
 import { Drizzle, generateStore } from "drizzle";
 
 import ProgPayETH from "./contracts/ProgPayETH.json";
+import ProgPayDAI from "./contracts/ProgPayDAI.json";
 
 
 
 // let drizzle know what contracts we want
 const options = {
-  contracts: [ProgPayETH],
+  contracts: [ProgPayETH, ProgPayDAI],
   syncAlways:true,
   web3: {
 

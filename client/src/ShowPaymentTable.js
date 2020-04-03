@@ -30,7 +30,7 @@ constructor(props){
  componentDidMount() {
 
     const { drizzle } = this.props;
-    const contract = drizzle.contracts.DynamicProgPayETH;
+    const contract = drizzle.contracts[this.props.contractId];
     let paymentIndexes = [];
 
     for (let i=0; i<this.props.numberOfPayments; i++){
@@ -45,14 +45,14 @@ constructor(props){
 
  handleRequestPayment(){
    const {drizzle, drizzleState} = this.props;
-   const contract = drizzle.contracts.DynamicProgPayETH;
+   const contract = drizzle.contracts[this.props.contractId];
    const stackIdReq = contract.methods['requestPayment'].cacheSend({from: drizzleState.accounts[0], value:0});
    this.setState({ stackIdReq });
  }
 
  handleApprovePayment(){
    const {drizzle, drizzleState} = this.props;
-   const contract = drizzle.contracts.DynamicProgPayETH;
+   const contract = drizzle.contracts[this.props.contractId];
    const stackIdApp = contract.methods['approvePayment'].cacheSend({from: drizzleState.accounts[0], value:0});
    this.setState({ stackIdApp });
  }
@@ -88,22 +88,26 @@ constructor(props){
 render() {
 
   const { drizzle} = this.props;
-  const { DynamicProgPayETH } = this.props.drizzleState.contracts;
+  const contract = this.props.drizzleState.contracts[this.props.contractId];
   //console.log(drizzle);
   //console.log(drizzleState);
-  console.log(drizzle.contracts.DynamicProgPayETH.address);
+  console.log(drizzle.contracts[this.props.contractId].address);
   let isPayer;
   let isPayee;
-  const payee = DynamicProgPayETH.payee[this.props.indexes.payeeIndex];
-  const payer = DynamicProgPayETH.payer[this.props.indexes.payerIndex];
-  const nextPayment = DynamicProgPayETH.nextPayment['0x0'];
+  const payee = contract.payee[this.props.indexes.payeeIndex];
+  const payer = contract.payer[this.props.indexes.payerIndex];
+  const nextPayment = contract.nextPayment['0x0'];
 
   //console.log(nextPayment && "NPI "+nextPayment.value);
   //console.log('2 '+payee.value);
   //console.log('2r '+payer.value);
 
-  if (payer || payee){
+  if (payer){
     isPayer = this.props.drizzleState.accounts[0]===payer.value;
+    //console.log(isPayer?"Payer":isPayee?"Payee":"Neither Payer or Payee");
+  }
+
+  if (payee){
     isPayee = this.props.drizzleState.accounts[0]===payee.value;
     //console.log(isPayer?"Payer":isPayee?"Payee":"Neither Payer or Payee");
   }
@@ -113,11 +117,10 @@ let paymentDetails = {};
 //console.log(this.state.paymentIndexes);
 paymentDetails = this.state.paymentIndexes.map(x=>{
   let rObj = {};
-  rObj['paymentValue'] = DynamicProgPayETH.paymentNumberToValue[x.paymentIndex];
-  rObj['requested'] = DynamicProgPayETH.paymentNumberToRequested[x.requestedIndex];
-  rObj['approved'] = DynamicProgPayETH.paymentNumberToApproved[x.approvedIndex];
+  rObj['paymentValue'] = contract.paymentNumberToValue[x.paymentIndex];
+  rObj['requested'] = contract.paymentNumberToRequested[x.requestedIndex];
+  rObj['approved'] = contract.paymentNumberToApproved[x.approvedIndex];
   return rObj;
-  //return {DynamicProgPayETH.paymentNumberToValue[x.paymentIndex],DynamicProgPayETH.paymentNumberToRequested[x.requestedIndex], DynamicProgPayETH.paymentNumberToApproved[x.approvedIndex]}
 });
 
 let statusReq = this.getStatusReq();
@@ -130,12 +133,13 @@ let contractVal = this.props.contractValue;
 
     return (
 
-      <div>
+      <div className="container">
+      <h6>Payment Status</h6>
 
                 {paymentDetails.map(function(payment, index){
                     return (
-                      <div key={index}>
-                      <p key={index}>Payment #{index+1} in the amount of {parseFloat((web3.utils.fromWei((contractVal/numPayments).toString(), 'ether'))).toFixed(3)}Ξ
+
+                      <div className={payment.requested && payment.approved && (payment.requested.value===false?"alert alert-danger":payment.requested.value===true && payment.approved.value===false?"alert alert-warning":"alert alert-success")} role="alert" key={index}>Payment #{index+1} in the amount of {this.props.contractId==="DynamicProgPayETH"?"":"$"}{parseFloat((web3.utils.fromWei((contractVal/numPayments).toString(), 'ether'))).toFixed(3)}{this.props.contractId==="DynamicProgPayETH"?"Ξ":""}
                      {payment.requested && (payment.requested.value===false?" has not been requested.   ": payment.approved && (payment.approved.value===true)?" has been requested and paid!":" has been requested and is awaiting approval/payment.   ")}
 
                     {
@@ -146,8 +150,8 @@ let contractVal = this.props.contractValue;
                       payer && isPayer===true && nextPayment && Number(nextPayment.value)===index+1 && payment.requested && payment.requested.value===true &&
                       <button className="btn btn-primary btn-sm" onClick={this.handleApprovePayment} disabled = {statusApp==="pending"?true:false}>{!statusApp?'Approve':statusApp==="success"?'Success!':statusApp}</button>
                     }
-                    </p>
                     </div>
+
                   )
 
 

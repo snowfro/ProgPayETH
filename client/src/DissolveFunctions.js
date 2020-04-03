@@ -18,7 +18,7 @@ class DissolveFunctions extends React.Component {
   componentDidMount() {
 
      const { drizzle } = this.props;
-     const contract = drizzle.contracts.DynamicProgPayETH;
+     const contract = drizzle.contracts[this.props.contractId];
 
      const payerDissolveIndex = contract.methods['payerWantsOut'].cacheCall();
      const payeeDissolveIndex = contract.methods['payeeWantsOut'].cacheCall();
@@ -40,8 +40,8 @@ class DissolveFunctions extends React.Component {
 
   handleToggleDissolveStatus(){
     const { drizzleState } = this.props;
-    const { DynamicProgPayETH } = this.props.drizzle.contracts;
-    const stackIdToggleDis = DynamicProgPayETH.methods['toggleAgreeToDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
+    const contract = this.props.drizzle.contracts[this.props.contractId];
+    const stackIdToggleDis = contract.methods['toggleAgreeToDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
     this.setState({ stackIdToggleDis });
   }
 
@@ -60,8 +60,8 @@ class DissolveFunctions extends React.Component {
 
   handleSetMediatorAddress(){
     const { drizzleState } = this.props;
-    const { DynamicProgPayETH } = this.props.drizzle.contracts;
-    const stackIdSetMediator = DynamicProgPayETH.methods['setMediatorAddress'].cacheSend(this.state.mediatorAddress,{from: drizzleState.accounts[0], value:0});
+    const contract = this.props.drizzle.contracts[this.props.contractId];
+    const stackIdSetMediator = contract.methods['setMediatorAddress'].cacheSend(this.state.mediatorAddress,{from: drizzleState.accounts[0], value:0});
     this.setState({ stackIdSetMediator });
   }
 
@@ -85,8 +85,8 @@ class DissolveFunctions extends React.Component {
 
   handleDissolveContract(){
     const { drizzleState } = this.props;
-    const { DynamicProgPayETH } = this.props.drizzle.contracts;
-    const stackIdDissolve = DynamicProgPayETH.methods['dissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
+    const contract = this.props.drizzle.contracts[this.props.contractId];
+    const stackIdDissolve = contract.methods['dissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
     this.setState({ stackIdDissolve });
   }
 
@@ -105,8 +105,8 @@ class DissolveFunctions extends React.Component {
 
   handleForceDissolveContract(){
     const { drizzleState } = this.props;
-    const { DynamicProgPayETH } = this.props.drizzle.contracts;
-    const stackIdForceDissolve = DynamicProgPayETH.methods['forceDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
+    const contract = this.props.drizzle.contracts[this.props.contractId];
+    const stackIdForceDissolve = contract.methods['forceDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
     this.setState({ stackIdForceDissolve });
   }
 
@@ -127,8 +127,8 @@ class DissolveFunctions extends React.Component {
 
   handleForceDissolveContract2(){
     const { drizzleState } = this.props;
-    const { DynamicProgPayETH } = this.props.drizzle.contracts;
-    const stackIdForceDissolve2 = DynamicProgPayETH.methods['forceDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
+    const contract = this.props.drizzle.contracts[this.props.contractId];
+    const stackIdForceDissolve2 = contract.methods['forceDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
     this.setState({ stackIdForceDissolve2 });
   }
 
@@ -147,8 +147,8 @@ class DissolveFunctions extends React.Component {
 
   handleResetDissolveContractTimer(){
     const { drizzleState } = this.props;
-    const { DynamicProgPayETH } = this.props.drizzle.contracts;
-    const stackIdresetForceDissolve = DynamicProgPayETH.methods['resetForceDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
+    const contract = this.props.drizzle.contracts[this.props.contractId];
+    const stackIdresetForceDissolve = contract.methods['resetForceDissolve'].cacheSend({from: drizzleState.accounts[0], value:0});
     this.setState({ stackIdresetForceDissolve });
   }
 
@@ -170,17 +170,17 @@ class DissolveFunctions extends React.Component {
   render(){
 
 
-    const { DynamicProgPayETH } = this.props.drizzleState.contracts;
+    const contract = this.props.drizzleState.contracts[this.props.contractId];
 
-    const payerDissolve = DynamicProgPayETH.payerWantsOut[this.state.payerDissolveIndex];
-    const payeeDissolve = DynamicProgPayETH.payeeWantsOut[this.state.payeeDissolveIndex];
-    const forceDissolveStartTime = DynamicProgPayETH.forceDissolveStartTime[this.state.forceDissolveStartTimeIndex];
-    const forceDissolveDelay = DynamicProgPayETH.forceDissolveDelay[this.state.forceDissolveDelayIndex];
+    const payerDissolve = contract.payerWantsOut[this.state.payerDissolveIndex];
+    const payeeDissolve = contract.payeeWantsOut[this.state.payeeDissolveIndex];
+    const forceDissolveStartTime = contract.forceDissolveStartTime[this.state.forceDissolveStartTimeIndex];
+    const forceDissolveDelay = contract.forceDissolveDelay[this.state.forceDissolveDelayIndex];
 
-    const payerMediatorAddress = DynamicProgPayETH.payerMediatorAddress[this.state.payerMediatorAddressIndex];
-    const payeeMediatorAddress = DynamicProgPayETH.payeeMediatorAddress[this.state.payeeMediatorAddressIndex];
+    const payerMediatorAddress = contract.payerMediatorAddress[this.state.payerMediatorAddressIndex];
+    const payeeMediatorAddress = contract.payeeMediatorAddress[this.state.payeeMediatorAddressIndex];
 
-    const nextPaymentRequested = DynamicProgPayETH.paymentNumberToRequested[this.state.nextPaymentRequestedIndex];
+    const nextPaymentRequested = contract.paymentNumberToRequested[this.state.nextPaymentRequestedIndex];
 
     let mediatorAddressesMatchButNot0x0;
     if (payerMediatorAddress && payeeMediatorAddress){
@@ -208,10 +208,10 @@ class DissolveFunctions extends React.Component {
     let isPayer;
     let isPayee;
 
-    const payee = DynamicProgPayETH.payee[this.props.indexes.payeeIndex];
-    const payer = DynamicProgPayETH.payer[this.props.indexes.payerIndex];
+    const payee = contract.payee[this.props.indexes.payeeIndex];
+    const payer = contract.payer[this.props.indexes.payerIndex];
 
-    const timeRemaining = DynamicProgPayETH.timeRemaining[this.state.timeRemainingIndex];
+    const timeRemaining = contract.timeRemaining[this.state.timeRemainingIndex];
 
     if (payer || payee){
       isPayer = this.props.drizzleState.accounts[0]===payer.value;
